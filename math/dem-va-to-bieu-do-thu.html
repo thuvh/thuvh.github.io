@@ -17,6 +17,10 @@ button{font:600 13px/1 inherit;padding:9px 16px;border:1px solid var(--rule);bor
   color:var(--ink);cursor:pointer}
 button:hover{background:#f2f2f2}
 button:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+.crumb{max-width:760px;margin:0 auto;padding:16px 18px 0;font-size:12px}
+.crumb a{color:var(--bar);text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+@media print{.crumb{display:none}}
 
 .pg{width:190mm;min-height:277mm;margin:0 auto 8mm;background:#fff;display:flex;flex-direction:column;gap:4mm;
   border:1px dashed #ddd}
@@ -78,6 +82,7 @@ ol.q .ic{display:inline-block;width:9mm;height:9mm;vertical-align:-2.5mm}
 }
 </style>
 
+<div class="crumb"><a href="../index.html">Trang chủ</a> / <a href="index.html">Math</a> / Đếm và tô biểu đồ</div>
 <div class="note">
 <h1>Đếm và tô biểu đồ — con thú</h1>
 <p><b>In:</b> Ctrl/Cmd+P → A4, một mặt, tỉ lệ 100%, bỏ tick “headers and footers”. Khung nét đứt chỉ hiện trên màn hình.</p>
