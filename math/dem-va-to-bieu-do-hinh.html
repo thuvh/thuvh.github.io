@@ -1,0 +1,303 @@
+<title>Đếm và tô biểu đồ — hình khối</title>
+<style>
+:root{--ink:#222;--guide:#b9b9b9;--soft:#777;--rule:#8a8a8a;--bar:#2a78d6;--red:#b3261e;--penh:152mm}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 "Century Gothic",Questrial,Futura,Verdana,system-ui,sans-serif;color:var(--ink);background:#fff;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#eee}
+  :root:not([data-theme="light"]) body{background:#111}
+  :root:not([data-theme="light"]) .pg{background:#fff;color:#222}}
+.note{max-width:760px;margin:0 auto;padding:24px 18px;font-size:13px;color:var(--soft)}
+.note h1{font-size:19px;color:var(--ink);margin:0 0 10px}
+.note h2{font-size:14px;color:var(--ink);margin:18px 0 6px}
+.note b{color:var(--ink)}
+.note li{margin:4px 0}
+.note code{font-size:12px}
+button{font:600 13px/1 inherit;padding:9px 16px;border:1px solid var(--rule);border-radius:4px;background:#fff;
+  color:var(--ink);cursor:pointer}
+button:hover{background:#f2f2f2}
+button:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+
+.pg{width:190mm;min-height:277mm;margin:0 auto 8mm;background:#fff;display:flex;flex-direction:column;gap:4mm;
+  border:1px dashed #ddd}
+.hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.6mm solid var(--ink);padding:0 0 2mm}
+.hd .ttl{font-size:14pt;letter-spacing:.1em;font-weight:700}
+.hd .wk{font-size:8.5pt;color:var(--soft)}
+.box{border:.4mm solid var(--rule);border-radius:2mm;padding:3mm 4mm}
+.box>h3{margin:0 0 2.5mm;font-size:9.5pt;font-weight:700;color:var(--soft);letter-spacing:.04em}
+.warn{font-size:8.5pt;color:var(--soft);margin:2mm 0 0}
+.name{display:flex;gap:6mm;font-size:10pt;align-items:baseline}
+.name u{display:inline-block;width:50mm;border-bottom:.4mm solid var(--ink);text-decoration:none}
+
+/* PHẦN 1 — dòng hình mẫu + hộp hình */
+.legend{display:none;gap:2mm;border:.5mm solid var(--ink);border-radius:2mm;padding:2mm 3mm;align-items:center}
+.legend.on{display:flex}
+.legend>b{width:26mm;flex:none;font-size:8pt;color:var(--soft);letter-spacing:.03em;line-height:1.25}
+.legend .lc{flex:1;display:flex;align-items:center;gap:1.5mm;justify-content:center}
+.legend .lc .ic{width:11mm;height:11mm;flex:none}
+.legend .lc .tx{font-size:8pt;line-height:1.2}
+.legend .lc .tx em{font-style:normal;display:block;color:var(--soft);font-size:7pt}
+.pen{position:relative;height:var(--penh);border:.6mm solid var(--ink);border-radius:3mm;overflow:hidden;background:#fff}
+.pen span{position:absolute;line-height:0;user-select:none}
+.pen span svg,.legend .lc .ic svg,.tallybar .cell .ic svg,.xlabs u .ic svg{width:100%;height:100%;display:block}
+.tallybar{display:flex;gap:3mm;margin-top:3mm}
+.tallybar .cell{flex:1;border:.4mm solid var(--rule);border-radius:2mm;padding:2mm;text-align:center}
+.tallybar .cell .ic{width:14mm;height:14mm;margin:0 auto 1mm;display:block}
+.tallybar .cell .nm{font-size:8pt;line-height:1.2;display:block;margin-bottom:1.5mm}
+.tallybar .cell .nm em{font-style:normal;color:var(--soft);display:block;font-size:7pt}
+.tallybar .cell .wr{height:13mm;border:.4mm solid var(--ink);border-radius:1.5mm;background:#fff}
+
+/* PHẦN 2 — lưới tô */
+.chartbox{margin:0 auto;width:max-content;max-width:100%}
+.gridwrap{display:flex;gap:2mm}
+.yax{display:flex;flex-direction:column-reverse;justify-content:space-between;width:8mm;flex:none;
+  height:190mm;font-size:9pt;color:var(--soft);text-align:right;padding:0 1mm 0 0}
+.yax span{line-height:0;display:block}
+.plot{height:190mm;display:flex;gap:2mm;border-left:.5mm solid var(--ink);
+  border-bottom:.5mm solid var(--ink);padding:0 2mm;align-items:stretch}
+.colm{width:19mm;flex:none;display:flex;flex-direction:column-reverse;gap:0}
+.colm i{display:block;height:19mm;flex:none;border:.35mm solid var(--guide);background:#fff}
+.colm i:first-child{border-bottom-width:.5mm}
+.xlabs{display:flex;gap:2mm;margin-left:10.5mm;padding:1.5mm 2mm 0}
+.xlabs u{width:19mm;flex:none;text-decoration:none;text-align:center;font-size:9pt;line-height:1.2}
+.xlabs u .ic{width:11mm;height:11mm;margin:0 auto .5mm;display:block}
+.xlabs u em{font-style:normal;color:var(--soft);display:block;font-size:7pt}
+.xlabs u .vn{display:block;min-height:2.4em;font-weight:400}
+.swatch{display:flex;gap:2mm;margin-left:10.5mm;padding:0 2mm;margin-top:1.2mm}
+.swatch u{width:19mm;flex:none;text-decoration:none;text-align:center;font-size:7pt;color:var(--soft)}
+.swatch u b{display:block;height:4mm;border:.35mm solid var(--rule);border-radius:1mm;margin-bottom:.8mm}
+
+/* PHẦN 3 — câu hỏi */
+ol.q{margin:0;padding-left:7mm;display:flex;flex-direction:column;gap:5mm}
+ol.q>li{font-size:12pt;line-height:1.3}
+ol.q .vi{display:block;font-size:10pt;color:#444;font-style:italic;margin-top:.5mm}
+ol.q .ans{display:block;width:60mm;height:10mm;border-bottom:.45mm solid var(--ink);margin-top:2mm}
+ol.q .ic{display:inline-block;width:9mm;height:9mm;vertical-align:-2.5mm}
+
+/* đáp án */
+.slip table{width:100%;border-collapse:collapse;font-size:10pt}
+.slip th,.slip td{border:.3mm solid var(--rule);padding:2mm;text-align:left}
+.slip th{font-size:8.5pt;color:var(--soft);font-weight:700}
+.slip td.c{text-align:center;font-weight:700;white-space:nowrap}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  .note{display:none}
+  .pg{width:auto;min-height:auto;height:277mm;margin:0;border:0;page-break-after:always;break-after:page}
+  .pg:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+
+<div class="note">
+<h1>Đếm và tô biểu đồ — hình khối</h1>
+<p><b>In:</b> Ctrl/Cmd+P → A4, một mặt, tỉ lệ 100%, bỏ tick “headers and footers”. Khung nét đứt chỉ hiện trên màn hình.</p>
+<p><b>4 trang:</b> ① đếm · ② tô biểu đồ cột · ③ năm câu hỏi · ④ <b>đáp án — in rời, giữ riêng</b>. Cần bút màu <b>xanh lá, đỏ, vàng, tím</b>.</p>
+<p style="margin:14px 0">
+  <button id="roll" type="button">🎲 Đổi số rồi in lại</button>
+  <button id="mode" type="button" style="margin-left:8px"></button>
+</p>
+<p>— 🎲 sinh lại số hình, <b>đáp án tự tính lại theo</b>. 🎨 đổi chế độ trang 1. <b>Màn hình đang ở chế độ nào thì in ra chế độ đó</b>, nên bấm xong mới Ctrl+P.</p>
+
+</div>
+
+<!-- ============ TRANG 1 · ĐẾM ============ -->
+<div class="pg">
+  <div class="hd"><span class="ttl">① ĐẾM · COUNT</span><span class="wk" id="wk1"></span></div>
+  <div class="name"><span>Tên: <u></u></span><span>Ngày: <u></u></span></div>
+  <p class="warn" style="font-size:10pt;color:#222" id="hint1"></p>
+  <div class="legend" id="legend"></div>
+  <div class="pen" id="pen"></div>
+  <div class="tallybar" id="tallybar"></div>
+  <p class="warn">💡 Mẹo cho con: đếm <b>một loại một lượt</b> và dùng ngón tay chỉ vào từng hình — đếm cả bốn loại cùng lúc thì rất dễ sót.</p>
+</div>
+
+<!-- ============ TRANG 2 · TÔ ============ -->
+<div class="pg">
+  <div class="hd"><span class="ttl">② TÔ BIỂU ĐỒ CỘT · COLOUR THE BAR GRAPH</span><span class="wk">1 ô = 1 hình</span></div>
+  <p class="warn" style="font-size:10pt;color:#222"><b>Tô số ô đúng bằng số hình con vừa đếm. Tô từ DƯỚI lên, tô đúng màu của hình.</b><br>
+    <i>Colour one cell for each shape. Start from the bottom. Use the colour of the shape.</i></p>
+  <div class="chartbox">
+    <div class="gridwrap">
+      <div class="yax" id="yax"></div>
+      <div class="plot" id="plot"></div>
+    </div>
+    <div class="swatch" id="swatch"></div>
+    <div class="xlabs" id="xlabs"></div>
+  </div>
+  <p class="warn">🔴 Cột nào cũng bắt đầu từ vạch <b>0</b> ở dưới cùng. Ô thừa ở trên <b>để trống</b> — biểu đồ cho biết cái gì nhiều, không phải cho biết tô hết chỗ trống.</p>
+</div>
+
+<!-- ============ TRANG 3 · HỎI ============ -->
+<div class="pg">
+  <div class="hd"><span class="ttl">③ TRẢ LỜI · ANSWER</span><span class="wk">nhìn biểu đồ trang 2 — đừng đếm lại trang 1</span></div>
+  <ol class="q" id="qs"></ol>
+  <div class="box" style="margin-top:auto">
+    <h3>CON VIẾT MỘT CÂU — KHÔNG CHẤM, KHÔNG SỬA</h3>
+    <p class="warn" style="font-size:10pt;color:#222">Nhìn biểu đồ, con thấy điều gì? <i>What do you see in the graph?</i></p>
+    <div style="height:10mm;border-bottom:.35mm solid var(--guide)"></div>
+    <div style="height:10mm;border-bottom:.35mm solid var(--guide)"></div>
+  </div>
+</div>
+
+<!-- ============ TRANG 4 · ĐÁP ÁN ============ -->
+<div class="pg slip">
+  <div class="hd"><span class="ttl">ĐÁP ÁN — CỦA BỐ</span><span class="wk">🔴 in rời · giữ riêng · không đưa con xem</span></div>
+  <div class="box"><h3>SỐ HÌNH TRONG KHUNG TRANG 1</h3><div id="key"></div></div>
+  <table id="ansq"></table>
+  <p class="warn">📌 <b>Đọc theo dạng, không đọc theo số câu đúng.</b> Sai câu 1–2 ⇒ chưa so được cột cao thấp, quay lại tô. Sai câu 3 ⇒ nghe chưa ra <b>từ lệnh</b> <i>“nhiều hơn mấy”</i> — chỗ mất điểm lớn nhất trong đề thi thật, không phải chỗ thiếu kiến thức. Sai câu 4 ⇒ cộng bốn số là việc khó, bình thường. Sai câu 5 ⇒ chưa tách được biểu đồ khỏi đống hình.</p>
+  <p class="warn">🎨 <b>Nếu in bản để trắng, chấm tách làm hai chuyện.</b> Hình tô <b>sai màu</b> là lỗi <b>phân loại</b> — con chưa nhìn ra đó là hình gì, và nó sẽ kéo sai luôn cả cột ở trang 2. Tô đúng màu nhưng <b>đếm lệch</b> thì chỉ là lỗi đếm, nhẹ hơn nhiều. Hai thứ này chữa khác nhau, đừng gộp thành “làm sai”.</p>
+  <p class="warn">🔷 <b>Một câu hỏi thêm, chỉ hỏi miệng, không ghi điểm:</b> <i>“Hình nào có 3 cạnh? Hình nào không có cạnh nào?”</i> Con chỉ đúng tam giác và hình tròn ⇒ con đang nhìn <b>hình</b>. Con im hoặc chỉ theo màu ⇒ con đếm cả tờ này bằng màu, và lần sau nên in bản để trắng.</p>
+  <p class="warn">🔴 <b>Không đọc số câu đúng cho con nghe.</b> Thứ đáng ghi lại kèm ngày là <b>câu con nói khi làm xong</b>, không phải con số — cùng quy tắc với mọi phép thử khác.</p>
+  <p class="warn">🎲 <b>Dùng lại tờ này:</b> mở tệp trên trình duyệt, bấm <b>“Đổi số rồi in lại”</b> — số hình sinh mới, năm câu hỏi và cả trang đáp án này tự tính lại theo. In được bao nhiêu lần tuỳ ý, không lần nào trùng lần nào.</p>
+</div>
+
+<script>
+/* ---- icon tự vẽ: hình học thuần, không mặt mũi ---- */
+const starPath=(cx,cy,R,r,n=5)=>{let p="";
+ for(let i=0;i<2*n;i++){const a=-Math.PI/2+i*Math.PI/n,rad=i%2?r:R;
+   p+=(i?"L":"M")+(cx+rad*Math.cos(a)).toFixed(1)+","+(cy+rad*Math.sin(a)).toFixed(1);}
+ return p+"Z";};
+
+const SVG={
+ square:  (f,s)=>`<rect x="14" y="14" width="72" height="72" rx="4" fill="${f}" stroke="${s}" stroke-width="4"/>`,
+ triangle:(f,s)=>`<path d="M50,13 L89,83 L11,83 Z" fill="${f}" stroke="${s}" stroke-width="4" stroke-linejoin="round"/>`,
+ circle:  (f,s)=>`<circle cx="50" cy="50" r="37" fill="${f}" stroke="${s}" stroke-width="4"/>`,
+ star:    (f,s)=>`<path d="${starPath(50,51,41,18)}" fill="${f}" stroke="${s}" stroke-width="4" stroke-linejoin="round"/>`
+};
+/* blank=true ⇒ ruột trắng, viền XÁM CHUNG cho cả bốn hình.
+   Viền theo màu riêng là lộ đáp án, mất sạch ý nghĩa của bản để trắng. */
+const BLANKLINE="#5a5a5a";
+const ICON=(a,blank)=>`<svg viewBox="0 0 100 100" role="img" aria-label="${a.en}">`+
+  SVG[a.k](blank?"#fff":a.hex, blank?BLANKLINE:a.line)+`</svg>`;
+
+const A=[
+ {k:"square",  en:"Square",   vi:"Hình vuông",   mau:"xanh lá", hex:"#3f9142", line:"#275c29"},
+ {k:"triangle",en:"Triangle", vi:"Hình tam giác",mau:"đỏ",      hex:"#c62f24", line:"#86201a"},
+ {k:"circle",  en:"Circle",   vi:"Hình tròn",    mau:"vàng",    hex:"#f3b11f", line:"#96700a"},
+ {k:"star",    en:"Star",     vi:"Ngôi sao",     mau:"tím",     hex:"#7a4fbf", line:"#4e2b87"}
+];
+const ROWS=10;
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+let BLANK=false;                       // false = tô sẵn · true = để trắng cho con tô
+
+function counts(){
+  for(;;){
+    const c=A.map(()=>ri(2,8));
+    const mx=Math.max(...c), mn=Math.min(...c);
+    // cần đúng một loại nhiều nhất, và khoảng cách đủ để câu "nhiều hơn mấy" có nghĩa
+    if(c.filter(v=>v===mx).length===1 && mx-mn>=2) return c;
+  }
+}
+
+function build(){
+  const c=counts();
+  const total=c.reduce((a,b)=>a+b,0);
+  const iMax=c.indexOf(Math.max(...c));
+  const mn=Math.min(...c), iMins=c.map((v,i)=>v===mn?i:-1).filter(i=>i>=0);
+  const iMin=iMins[0];
+  const iAdd=ri(0,A.length-1);
+
+  /* ---- chế độ: dòng mẫu ăn mất chiều cao, khung co lại đúng bấy nhiêu ---- */
+  const PH=BLANK?131:152;              // chiều cao khung, mm
+  document.documentElement.style.setProperty("--penh",PH+"mm");
+  document.getElementById("legend").className="legend"+(BLANK?" on":"");
+  document.getElementById("legend").innerHTML=BLANK
+    ? `<b>DÒNG MẪU<br>tô theo đúng<br>màu này</b>`+
+      A.map(a=>`<span class="lc"><span class="ic">${ICON(a,false)}</span>`+
+        `<span class="tx">${a.vi}<em>tô màu ${a.mau}</em></span></span>`).join("")
+    : "";
+  document.getElementById("wk1").textContent=
+    BLANK?"tô màu rồi mới đếm":"có bao nhiêu hình mỗi loại?";
+  document.getElementById("hint1").innerHTML=BLANK
+    ? `<b>Bước 1 — tô màu tất cả các hình trong khung theo dòng mẫu ở trên.</b><br>`+
+      `<b>Bước 2 — đếm từng loại, viết số vào ô của loại đó ở dưới.</b><br>`+
+      `<i>First colour every shape using the key above. Then count each kind and write the number below.</i>`
+    : `<b>Đếm từng loại hình trong khung.</b> Đếm xong loại nào thì viết số vào ô của loại đó ở dưới.<br>`+
+      `<i>Count each kind of shape. Write the number in the box below.</i>`;
+
+  /* ---- ① hộp hình: ô lưới xáo trộn + xê dịch nhẹ ---- */
+  const PW=190;                                // khung, đơn vị mm
+  const COLS=Math.max(3,Math.round(Math.sqrt(total*PW/PH)));
+  const RS=Math.ceil(total/COLS);
+  const cw=PW/COLS, ch=PH/RS;                  // một ô lưới
+  const size=Math.min(26,Math.max(13,0.7*Math.min(cw,ch)));   // icon nở kín ô, có trần
+  const jx=cw*0.15, jy=ch*0.15;                // xê dịch nhẹ để bớt máy móc
+  const slots=[];
+  for(let r=0;r<RS;r++)for(let k=0;k<COLS;k++)slots.push([r,k]);
+  for(let i=slots.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[slots[i],slots[j]]=[slots[j],slots[i]];}
+  const pick=[];
+  c.forEach((n,i)=>{for(let k=0;k<n;k++)pick.push(i);});
+  let html="";
+  pick.forEach((i,s)=>{
+    const [r,col]=slots[s];
+    const x=(col+0.5)*cw+(Math.random()*2-1)*jx;
+    const y=(r+0.5)*ch+(Math.random()*2-1)*jy;
+    const rot=(Math.random()*2-1)*14;          // nghiêng nhẹ: hình vẫn là hình khi xoay
+    html+=`<span style="left:${(x/PW*100).toFixed(2)}%;top:${(y/PH*100).toFixed(2)}%;`+
+          `width:${size.toFixed(1)}mm;height:${size.toFixed(1)}mm;`+
+          `transform:translate(-50%,-50%) rotate(${rot.toFixed(1)}deg)">${ICON(A[i],BLANK)}</span>`;
+  });
+  document.getElementById("pen").innerHTML=html;
+
+  // ô ghi số cũng để trắng: con phải nhận ra hình để biết viết vào đâu
+  document.getElementById("tallybar").innerHTML=A.map(a=>
+    `<div class="cell"><span class="ic">${ICON(a,BLANK)}</span><span class="nm">${a.vi}<em>${a.en}</em></span><div class="wr"></div></div>`).join("");
+
+  /* ---- ② lưới tô ---- */
+  document.getElementById("yax").innerHTML=
+    Array.from({length:ROWS+1},(_,i)=>`<span>${i}</span>`).join("");
+  document.getElementById("plot").innerHTML=A.map(()=>
+    `<div class="colm">${Array.from({length:ROWS},()=>"<i></i>").join("")}</div>`).join("");
+  document.getElementById("swatch").innerHTML=A.map(a=>
+    `<u><b style="background:${a.hex}"></b>tô màu ${a.mau}</u>`).join("");
+  document.getElementById("xlabs").innerHTML=A.map(a=>
+    `<u><span class="ic">${ICON(a,false)}</span><b class="vn">${a.vi}</b><em>${a.en}</em></u>`).join("");
+
+  /* ---- ③ năm câu hỏi ---- */
+  const lo=i=>A[i].vi.toLowerCase();
+  const Q=[
+   {en:`Which shape has the <b>most</b>?`, vi:`Hình nào <b>nhiều nhất</b>?`,
+    a:`${A[iMax].vi} (${A[iMax].en}) — ${c[iMax]} hình`,
+    why:`most — cột cao nhất. Không cần đếm, chỉ cần nhìn`},
+   {en:`Which shape has the <b>fewest</b>?`, vi:`Hình nào <b>ít nhất</b>?`,
+    a: iMins.length>1
+       ? `Bằng nhau: ${iMins.map(i=>A[i].vi).join(", ").replace(/, ([^,]*)$/," và $1")} — cùng ${mn} hình`
+       : `${A[iMin].vi} (${A[iMin].en}) — ${c[iMin]} hình`,
+    why: iMins.length>1
+       ? `🔴 Có HAI cột thấp bằng nhau. Con chỉ nói một hình là dừng ở cái nhìn thấy trước`
+       : `fewest — cột thấp nhất`},
+   {en:`How many <b>more</b> ${A[iMax].en.toLowerCase()}s than ${A[iMin].en.toLowerCase()}s?`,
+    vi:`${A[iMax].vi} nhiều hơn ${lo(iMin)} <b>mấy hình</b>?`,
+    a:`${c[iMax]-c[iMin]} hình &nbsp;<span style="font-weight:400">(${c[iMax]} − ${c[iMin]})</span>`,
+    why:`🔴 how many more — phải TRỪ. Con đọc "${c[iMax]}" ⇒ đếm đúng, nghe sai câu hỏi`},
+   {en:`How many shapes <b>in all</b>?`, vi:`Tất cả bao nhiêu hình?`,
+    a:`${total} hình &nbsp;<span style="font-weight:400">(${c.join(" + ")})</span>`,
+    why:`in all — cộng cả bốn cột. Cộng bốn số là việc khó với lớp 1`},
+   {en:`<b>2 more</b> ${A[iAdd].en.toLowerCase()}s are added. How many cells will you colour then?`,
+    vi:`Có thêm <b>2 ${lo(iAdd)}</b> nữa. Lúc đó cột ${lo(iAdd)} cao mấy ô?`,
+    a:`${c[iAdd]+2} ô &nbsp;<span style="font-weight:400">(${c[iAdd]} + 2)</span>`,
+    why:`🔴 Con tô thêm vào biểu đồ thay vì trả lời bằng số ⇒ chưa tách được BIỂU ĐỒ khỏi ĐỐNG HÌNH`}
+  ];
+  document.getElementById("qs").innerHTML=Q.map((q,i)=>
+    `<li><b>${q.en.replace(/^./,m=>m.toUpperCase())}</b> ${i===2?`<span class="ic">${ICON(A[iMax],false)}</span>`:i===4?`<span class="ic">${ICON(A[iAdd],false)}</span>`:""}`+
+    `<span class="vi">${q.vi}</span><span class="ans"></span></li>`).join("");
+
+  /* ---- ④ đáp án ---- */
+  document.getElementById("key").innerHTML=
+    `<div style="display:flex;gap:4mm;font-size:11pt">`+
+    A.map((a,i)=>`<span style="flex:1;text-align:center"><span style="display:block;width:13mm;height:13mm;margin:0 auto">${ICON(a,false)}</span>`+
+      `<b style="font-size:15pt">${c[i]}</b><br><span style="font-size:8pt;color:var(--soft)">${a.vi}</span></span>`).join("")+
+    `</div><p class="warn" style="text-align:center">Tổng: <b>${total}</b> hình`+
+    `<span style="margin-left:4mm">Chế độ trang 1: <b>${BLANK?"để trắng cho con tô":"tô sẵn màu"}</b></span></p>`;
+  document.getElementById("ansq").innerHTML=
+    `<thead><tr><th>Câu</th><th>Đáp án</th><th>Câu này đo cái gì — con sai thì đọc dòng này</th></tr></thead><tbody>`+
+    Q.map((q,i)=>`<tr><td class="c">${i+1}</td><td class="c">${q.a}</td><td>${q.why}</td></tr>`).join("")+
+    `</tbody>`;
+
+  document.getElementById("mode").textContent=
+    BLANK?"🎨 Đang: ĐỂ TRẮNG cho con tô — bấm để tô sẵn":"🎨 Đang: TÔ SẴN màu — bấm để con tự tô";
+}
+build();
+document.getElementById("roll").addEventListener("click",build);
+document.getElementById("mode").addEventListener("click",()=>{BLANK=!BLANK;build();});
+</script>
