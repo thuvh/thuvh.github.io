@@ -3,20 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ThuVH</title>
+<title>Tiếng Việt — ThuVH</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3CYTBFGS04"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-3CYTBFGS04');
-</script>
 <style>
 :root{
   --md-primary:#4f378b;
@@ -46,6 +38,8 @@ body{
   font-weight:700;
   color:var(--md-primary) !important;
 }
+.breadcrumb a{ color:var(--md-primary); text-decoration:none; }
+.breadcrumb a:hover{ text-decoration:underline; }
 .md-card{
   border:none;
   border-radius:16px;
@@ -77,12 +71,13 @@ body{
   color:var(--md-on-surface-variant);
   font-size:.925rem;
 }
-.hero{
-  padding:3rem 0 2rem;
-}
-footer{
+.section-label{
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.04em;
   color:var(--md-on-surface-variant);
-  font-size:.875rem;
+  text-transform:uppercase;
+  margin:1.5rem 0 .75rem;
 }
 </style>
 </head>
@@ -90,43 +85,33 @@ footer{
 
 <nav class="navbar navbar-expand">
   <div class="container">
-    <a class="navbar-brand" href="index.html">ThuVH</a>
+    <a class="navbar-brand" href="../index.html">ThuVH</a>
   </div>
 </nav>
 
 <main class="container">
-  <div class="hero">
-    <h1 class="h3 mb-2">Page of ThuVH</h1>
-    <p class="text-secondary mb-0">Ghi chú và tài liệu học tập.</p>
-  </div>
+  <nav class="pt-4" aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="../index.html">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Tiếng Việt</li>
+    </ol>
+  </nav>
 
+  <h1 class="h3 mt-2 mb-0">Tiếng Việt</h1>
+
+  <div class="section-label">Bài đọc</div>
   <div class="row g-3 pb-5">
     <div class="col-12 col-sm-6 col-lg-4">
-      <a class="md-card p-3 p-md-4" href="math/index.html">
+      <a class="md-card p-3 p-md-4" href="ban-len-den.html">
         <div class="icon-wrap">
-          <span class="material-symbols-outlined">calculate</span>
+          <span class="material-symbols-outlined">landscape</span>
         </div>
-        <div class="card-title">Math</div>
-        <div class="card-text">Bài tập toán cho các lớp.</div>
-      </a>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-4">
-      <a class="md-card p-3 p-md-4" href="tieng-viet/index.html">
-        <div class="icon-wrap">
-          <span class="material-symbols-outlined">menu_book</span>
-        </div>
-        <div class="card-title">Tiếng Việt</div>
-        <div class="card-text">Bài đọc và hoạt cảnh tiếng Việt.</div>
+        <div class="card-title">Bản Làng Lên Đèn</div>
+        <div class="card-text">Hoạt cảnh chàng trai gùi củi về bản lúc hoàng hôn.</div>
       </a>
     </div>
   </div>
 </main>
-
-<footer class="container py-4 border-top">
-  <div class="d-flex justify-content-between flex-wrap gap-2">
-    <span>ThuVH</span>
-  </div>
-</footer>
 
 </body>
 </html>
