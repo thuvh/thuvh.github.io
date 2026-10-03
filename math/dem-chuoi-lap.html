@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phiếu đếm hình theo quy luật</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: an A4 worksheet card centered on screen; a control bar (not printed) drives regenerate / print / answers */
+:root{
+  --paper:#ffffff; --ink:#243b2e; --brand:#1d7a3a; --brand-soft:#eaf7ee;
+  --line:#e6efe9; --muted:#6a8275; --bg:#e7eeea;
+}
+@page{ size:A4; margin:12mm 12mm 11mm 12mm; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink);
+      font-family:'Nunito','Segoe UI','Noto Sans','DejaVu Sans',Arial,sans-serif; }
+
+.wrap{ max-width:830px; margin:0 auto; padding:18px 16px 44px; }
+
+/* control bar */
+.controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
+.controls .hint{ flex-basis:100%; font-size:12.5px; color:var(--muted); margin-bottom:2px; }
+button{ font-family:inherit; font-size:14px; font-weight:700; border-radius:11px;
+        padding:9px 16px; cursor:pointer; border:1.6px solid var(--brand);
+        background:#fff; color:var(--brand); transition:filter .12s, background .12s; }
+button.primary{ background:var(--brand); color:#fff; }
+button:hover{ filter:brightness(1.06); }
+button:active{ transform:translateY(1px); }
+button:focus-visible{ outline:3px solid #9bd3ad; outline-offset:2px; }
+
+/* the printable sheet */
+.sheet{ background:var(--paper); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.09);
+        padding:26px 30px; }
+.title{ text-align:center; }
+.title h1{ font-size:21px; margin:0 0 2px; color:var(--brand); letter-spacing:.3px; }
+.title .sub{ font-size:12px; color:var(--muted); margin-bottom:9px; }
+.meta{ display:flex; gap:10px; font-size:12.5px; border:1.5px dashed #bcd9c6;
+       background:#f4fbf6; border-radius:10px; padding:8px 12px; margin:6px 0 11px; }
+.meta span{ white-space:nowrap; }
+.meta .fill{ flex:1; border-bottom:1px dotted #9bbfa8; }
+.legend{ display:flex; gap:9px; justify-content:center; margin:0 0 9px; flex-wrap:wrap; }
+.chip{ display:flex; align-items:center; gap:6px; background:#fff; border:1.5px solid var(--line);
+       border-radius:999px; padding:3px 12px 3px 6px; font-size:12.5px; }
+.chip b{ font-weight:700; }
+.banner{ width:100%; height:50mm; border:2.5px dashed #2fa150; border-radius:16px;
+         background:#fcfffd; display:flex; align-items:center; justify-content:space-evenly;
+         padding:6px 20px; }
+.bicon{ display:inline-flex; }
+.rep{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.rep-tag{ font-size:11px; font-weight:700; color:#2fa150; background:var(--brand-soft);
+          border-radius:999px; padding:1px 11px; }
+.rep-row{ display:flex; align-items:center; gap:7px; }
+.bcap{ text-align:center; font-size:11.5px; color:var(--muted); font-style:italic; margin:5px 0 12px; }
+.ask{ text-align:center; font-weight:700; margin:0 0 9px; }
+.q{ display:flex; align-items:center; gap:10px; border:1.5px solid var(--line);
+    border-radius:12px; padding:9px 12px; margin-bottom:8px; background:#fff; }
+.qnum{ flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#2fa150; color:#fff;
+       font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+.qtext{ flex:1; font-size:14px; line-height:1.5; min-width:0; }
+.qtext b{ color:#15532b; }
+.qi{ display:inline-flex; vertical-align:middle; margin:0 1px; }
+.qans{ flex:0 0 auto; font-size:14px; color:#2b6b45; font-weight:700; white-space:nowrap; }
+
+/* answer key: hidden on screen until toggled; its own page when printing */
+.key{ display:none; margin-top:18px; background:var(--paper); border-radius:12px;
+      box-shadow:0 6px 24px rgba(0,0,0,.09); padding:22px 30px; }
+body.show-answers .key{ display:block; }
+.key h2{ color:var(--brand); font-size:17px; text-align:center; margin:4px 0; }
+.key .note{ text-align:center; font-size:12px; color:var(--muted); margin-bottom:12px; }
+.kr{ font-size:13.5px; padding:6px 10px; border-bottom:1px dashed #dcebe1; }
+.kr svg{ vertical-align:middle; }
+.kn{ font-weight:700; color:#15532b; }
+.kv{ font-weight:800; color:#d1611a; font-size:15px; }
+
+@media print{
+  .no-print{ display:none !important; }
+  body{ background:#fff; }
+  .wrap{ max-width:none; margin:0; padding:0; }
+  .sheet{ box-shadow:none; border-radius:0; padding:0; }
+  .key{ display:block !important; page-break-before:always; margin-top:0;
+        box-shadow:none; border-radius:0; padding:0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="controls no-print">
+    <div class="hint">Mở file này bằng trình duyệt, rồi bấm nút bên dưới. Mỗi lần "Tạo đề mới" sẽ cho 10 câu hỏi khác.</div>
+    <button id="btn-regen" class="primary" type="button">🔄 Tạo đề mới</button>
+    <button id="btn-print" type="button">🖨️ In phiếu</button>
+    <button id="btn-ans" type="button">👁️ Xem đáp án</button>
+  </div>
+
+  <div class="sheet">
+    <div class="title"><h1>PHIẾU BÀI TẬP · ĐẾM HÌNH THEO QUY LUẬT</h1>
+      <div class="sub">Toán tư duy vui • Dành cho bé lớp 1 – 2</div></div>
+
+    <div class="meta"><span>Họ và tên:</span><span class="fill"></span>
+      <span>Lớp:</span><span style="width:60px" class="fill"></span>
+      <span>Ngày:</span><span style="width:70px" class="fill"></span></div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="banner" id="banner"></div>
+    <div class="bcap">(Chuỗi hình ở trên được lặp lại 2 lần)</div>
+
+    <div class="ask">Em hãy điền số thích hợp vào chỗ trống:</div>
+    <div id="questions"></div>
+  </div>
+
+  <div class="key">
+    <h2>TRANG ĐÁP ÁN (dành cho phụ huynh)</h2>
+    <div class="note">Có thể gập hoặc cắt rời trang này trước khi đưa bé làm bài</div>
+    <div id="answers"></div>
+  </div>
+
+</div>
+
+<script>
+const SH = {
+  thoi:{name:'hình thoi', per:1},
+  trang:{name:'hình trăng', per:1},
+  hoa:{name:'bông hoa', per:2},
+  tim:{name:'trái tim', per:1},
+};
+const CHAIN = ['thoi','trang','hoa','hoa','tim'];
+let UID = 0;
+
+function icon(name, size){
+  const u = ++UID;
+  const head = '<svg viewBox="0 0 100 100" width="'+size+'" height="'+size+'" style="vertical-align:middle">';
+  if(name==='thoi')  // red diamond, sides curved inward (flat pastel)
+    return head+'<path d="M50 6 Q61 39 94 50 Q61 61 50 94 Q39 61 6 50 Q39 39 50 6 Z" fill="#e05454"/></svg>';
+  if(name==='trang') // gold crescent
+    return head+'<defs><mask id="k'+u+'"><rect width="100" height="100" fill="white"/>'
+      +'<circle cx="66" cy="43" r="35" fill="black"/></mask></defs>'
+      +'<circle cx="50" cy="50" r="40" fill="#edb62e" mask="url(#k'+u+')"/></svg>';
+  if(name==='hoa'){  // pink 5-petal flower, yellow center
+    let p='';
+    for(let k=0;k<5;k++) p+='<ellipse cx="50" cy="23" rx="15.5" ry="25" fill="#e883ad" transform="rotate('+(72*k)+' 50 50)"/>';
+    return head+p+'<circle cx="50" cy="50" r="13" fill="#f1ba3a"/></svg>';
+  }
+  if(name==='tim')   // ocean-blue heart
+    return head+'<path d="M50 85 C21 62 9 45 9 31 C9 17 20 9 32 9 C40 9 46 14 50 22 '
+      +'C54 14 60 9 68 9 C80 9 91 17 91 31 C91 45 79 62 50 85 Z" fill="#2a82d0"/></svg>';
+  return '';
+}
+
+function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+function genQuestions(){
+  const anchors = ['thoi','trang','tim'];   // appear once per chain -> N repeats == N of these
+  const NS = [3,4,5,6];
+  const flower = [], seen = new Set();
+  while(flower.length < 5){
+    const x = rand(anchors), n = rand(NS), key = x+'-'+n;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    flower.push({x:x, y:'hoa', n:n, ans:2*n});
+  }
+  const other = [], seen2 = new Set();
+  while(other.length < 5){
+    const x = rand(anchors), y = rand(anchors), n = rand(NS);
+    if(x===y) continue;
+    const key = x+'-'+y+'-'+n;
+    if(seen2.has(key)) continue;
+    seen2.add(key);
+    other.push({x:x, y:y, n:n, ans:n});
+  }
+  const all = flower.concat(other);
+  for(let i=all.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+  return all;
+}
+
+function buildStatic(){
+  document.getElementById('legend').innerHTML =
+    ['thoi','trang','hoa','tim'].map(s =>
+      '<span class="chip">'+icon(s,30)+'<b>'+SH[s].name+'</b></span>').join('');
+  const chain2 = CHAIN.concat(CHAIN);   // chuỗi lặp 2 lần = 10 hình, dàn đều theo hàng ngang
+  document.getElementById('banner').innerHTML =
+      chain2.map(s => '<span class="bicon">'+icon(s,56)+'</span>').join('');
+}
+
+function render(){
+  const qs = genQuestions();
+  const qc = document.getElementById('questions');
+  const ac = document.getElementById('answers');
+  qc.innerHTML = ''; ac.innerHTML = '';
+  qs.forEach((q, idx) => {
+    const n = idx+1;
+    const xi = '<span class="qi">'+icon(q.x,26)+'</span>';
+    const yi = '<span class="qi">'+icon(q.y,26)+'</span>';
+    qc.insertAdjacentHTML('beforeend',
+      '<div class="q"><div class="qnum">'+n+'</div><div class="qtext">Nếu '+xi+'<b>'
+      +SH[q.x].name+'</b> lặp lại <b>'+q.n+'</b> lần thì '+yi+'<b>'+SH[q.y].name
+      +'</b> xuất hiện:</div><div class="qans">______ lần</div></div>');
+    ac.insertAdjacentHTML('beforeend',
+      '<div class="kr"><span class="kn">Câu '+n+'.</span> '+icon(q.x,22)+' '+SH[q.x].name
+      +' lặp <b>'+q.n+'</b> lần → '+icon(q.y,22)+' '+SH[q.y].name+' = <span class="kv">'
+      +q.ans+'</span> lần</div>');
+  });
+}
+
+document.getElementById('btn-regen').addEventListener('click', render);
+document.getElementById('btn-print').addEventListener('click', () => window.print());
+document.getElementById('btn-ans').addEventListener('click', e => {
+  document.body.classList.toggle('show-answers');
+  const on = document.body.classList.contains('show-answers');
+  e.currentTarget.textContent = on ? '🙈 Ẩn đáp án' : '👁️ Xem đáp án';
+});
+
+buildStatic();
+render();
+</script>
+</body>
+</html>
