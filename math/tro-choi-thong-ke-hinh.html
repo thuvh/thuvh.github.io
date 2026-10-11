@@ -149,16 +149,31 @@ button.sm{font-size:13px;padding:8px 13px}
   .xlabs u b{min-height:3.4em;font-size:8pt}
   .xlabs u em{font-size:7pt}
   .xlabs u .n{display:none}          /* in ra thì ô ĐẾM phải trống cho con tự viết */
-  ol.pq{margin:3mm 0 0;padding-left:6mm;font-size:10pt}
-  ol.pq li{margin-bottom:2.2mm}
-  ol.pq u{display:inline-block;width:42mm;border-bottom:.4mm solid #000;text-decoration:none}
-  ol.pq em{font-style:italic;color:#555;font-size:8.5pt;display:block}
+  /* trang 3 — câu hỏi; trang 4 — đáp án. Mỗi phần một trang riêng */
+  #pane-q,#pane-key{break-before:page;page-break-before:always}
+  ol.pq{margin:4mm 0 0;padding-left:7mm;font-size:12pt}
+  ol.pq li{margin-bottom:6mm;break-inside:avoid}
+  ol.pq .ic{display:inline-block;width:8mm;height:8mm;vertical-align:-2mm;margin-left:1mm}
+  ol.pq .ic svg{width:100%;height:100%;display:block}
+  ol.pq em{font-style:italic;color:#555;font-size:9.5pt;display:block}
+  ol.pq u{display:block;width:55mm;height:9mm;border-bottom:.4mm solid #000;text-decoration:none}
+  .kcount{display:flex;gap:3mm;margin:0 0 4mm}
+  .kcount span{flex:1;text-align:center;font-size:8.5pt;border:.3mm solid #999;border-radius:1.5mm;padding:1.5mm}
+  .kcount .ic{display:block;width:9mm;height:9mm;margin:0 auto 1mm}
+  .kcount .ic svg{width:100%;height:100%;display:block}
+  .kcount b{display:block;font:700 15pt/1.2 "Lexend",system-ui,sans-serif;min-height:7mm}
+  .ktab{width:100%;border-collapse:collapse;font-size:10pt}
+  .ktab th,.ktab td{border:.3mm solid #999;padding:2mm;text-align:left;vertical-align:top}
+  .ktab th{font-size:8.5pt;color:#555}
+  .ktab td.c{text-align:center;white-space:nowrap}
+  .ktab td.blank{min-width:30mm}
+  .knote{font-size:9.5pt;margin:3mm 0 0}
 }
 </style>
 
 <div class="wrap">
 <h1>Trò chơi thống kê hình phẳng</h1>
-<p class="lede">Tung xúc xắc, đi từ <b>START</b> đến <b>FINISH</b>. Đến ô hình nào thì <b>tô một ô ở cột hình đó</b> trên biểu đồ. Hết ván, nhìn biểu đồ trả lời 5 câu — <b>không đếm lại bàn cờ</b>.</p>
+<p class="lede">Tung xúc xắc, đi từ <b>START</b> đến <b>FINISH</b>. Đến ô hình nào thì <b>tô một ô ở cột hình đó</b> trên biểu đồ. Hết ván, nhìn biểu đồ trả lời câu hỏi — <b>không đếm lại bàn cờ</b>.</p>
 
 <div class="game">
   <section class="card" id="pane-board">
@@ -176,7 +191,7 @@ button.sm{font-size:13px;padding:8px 13px}
     <div class="bwrap" id="bwrap"><div class="board" id="board"></div></div>
     <div class="bar" style="margin:14px 0 0">
       <button class="sm" id="again" type="button">↻ Làm mới — sinh lại hình</button>
-      <button class="sm" id="print" type="button">🖨️ In 2 mặt</button>
+      <button class="sm" id="print" type="button">🖨️ In</button>
       <button class="sm" id="auto" type="button"></button>
     </div>
   </section>
@@ -193,9 +208,23 @@ button.sm{font-size:13px;padding:8px 13px}
       <div class="plot" id="plot"></div>
     </div>
     <div class="xlabs" id="xlabs"></div>
-    <ol class="pq pOnly" id="pq"></ol>
   </section>
 </div>
+
+<!-- chỉ in: trang 3 câu hỏi, trang 4 đáp án -->
+<section class="pOnly" id="pane-q">
+  <div class="phead"><b>③ CÂU HỎI · QUESTIONS</b><i>nhìn bảng thống kê — không đếm lại bàn cờ</i></div>
+  <ol class="pq" id="pq"></ol>
+</section>
+<section class="pOnly" id="pane-key">
+  <div class="phead"><b>④ ĐÁP ÁN — CHO BỐ MẸ</b><i>in rời · giữ riêng · không đưa con xem</i></div>
+  <p class="ptip" id="kintro"></p>
+  <div class="kcount" id="kcount"></div>
+  <table class="ktab" id="ktab"></table>
+  <p class="knote">✅ <b>Kiểm tra nhanh biểu đồ:</b> tổng số ô tô = số lần quân dừng ở một ô hình (mọi lần tung, trừ lần cuối vào FINISH).
+    Bàn cờ có đúng <b>19 ô mỗi hình</b>, nên một cột cao vọt hẳn lên chỉ là do may rủi xúc xắc — không phải con tô sai.</p>
+  <p class="knote">🔴 Câu “chênh nhau mấy ô” phải <b>TRỪ</b>, câu “có tất cả” phải <b>CỘNG</b>. Con viết luôn số của một cột ⇒ đọc được biểu đồ nhưng chưa nghe ra từ lệnh.</p>
+</section>
 
 <section class="card" id="quiz" hidden>
   <h2>Nhìn biểu đồ · Look at the graph</h2>
@@ -307,18 +336,60 @@ function newBoard(){
 const at=i=>$("board").querySelector(`[data-i="${i}"]`);
 const shapeAt=i=>(i===0||i===LAST)?-1:path[i-1];
 
-// Bản in chưa có số liệu nên không thể ưu tiên cặp lệch nhau như bản chơi trên màn hình;
-// bốc 3 cặp phân biệt ngay lúc sinh bàn để tờ in nào cũng khác tờ in nào.
-function drawPrintQs(){
-  const all=[]; for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++)all.push([a,b]);
-  const pr=shuffle(all).slice(0,3);
-  const line=(vi,en)=>`<li>${vi} <u></u><em>${en}</em></li>`;
-  $("pq").innerHTML=
-    line(`Hình nào <b>nhiều nhất</b>?`,`Which shape has the most?`)+
-    line(`Hình nào <b>ít nhất</b>?`,`Which shape has the fewest?`)+
-    pr.map(([a,b])=>line(
-      `<b>${S[a].vi}</b> và <b>${S[b].vi.toLowerCase()}</b> chênh nhau mấy ô?`,
-      `What is the difference between ${S[a].en.toLowerCase()} and ${S[b].en.toLowerCase()}?`)).join("");
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const allPairs=()=>{const all=[];for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++)all.push([a,b]);return all;};
+const lo=i=>S[i].vi.toLowerCase(), loe=i=>S[i].en.toLowerCase();
+const icn=l=>l.map(i=>`<span class="ic">${ICON(S[i])}</span>`).join("");
+
+/* Một bộ câu hỏi dùng chung cho màn hình, trang in câu hỏi và trang in đáp án.
+   pairs: 3 cặp hỏi hiệu · sp: 1 cặp hỏi tổng hai cột · cuối cùng là tổng cả 5 cột. */
+function qSpec(pairs,sp){
+  return [
+   {t:`Hình nào <b>nhiều nhất</b>?`, en:`Which shape has the most?`, kind:"shape", ext:"max", how:`Cột cao nhất`},
+   {t:`Hình nào <b>ít nhất</b>?`, en:`Which shape has the fewest?`, kind:"shape", ext:"min", how:`Cột thấp nhất`},
+   ...pairs.map(([a,b])=>({ic:[a,b], kind:"num", op:"-", a, b,
+    t:`<b>${S[a].vi}</b> và <b>${lo(b)}</b> chênh nhau mấy ô?`,
+    en:`What is the difference between ${loe(a)}s and ${loe(b)}s?`,
+    how:`Cột cao TRỪ cột thấp (${lo(a)} − ${lo(b)} hoặc ngược lại)`})),
+   {ic:sp, kind:"num", op:"+", a:sp[0], b:sp[1],
+    t:`<b>${S[sp[0]].vi}</b> và <b>${lo(sp[1])}</b> có <b>tất cả</b> mấy ô?`,
+    en:`How many ${loe(sp[0])}s and ${loe(sp[1])}s altogether?`,
+    how:`CỘNG hai cột: ${lo(sp[0])} + ${lo(sp[1])}`},
+   {kind:"num", op:"all",
+    t:`Con tô <b>tất cả</b> bao nhiêu ô?`, en:`How many cells did you colour in all?`,
+    how:`CỘNG cả 5 cột`}
+  ];
+}
+// đáp án của một câu theo số liệu cnt: ok = các lựa chọn đúng, ans = chữ in ở trang đáp án
+function solve(q,cnt){
+  const nm=l=>l.map((i,k)=>k?lo(i):S[i].vi).join(", ").replace(/, ([^,]*)$/," và $1");
+  if(q.kind==="shape"){
+    const v=q.ext==="max"?Math.max(...cnt):Math.min(...cnt);
+    const ok=cnt.map((x,i)=>x===v?i:-1).filter(i=>i>=0);
+    return {ok, ans:`${nm(ok)} — ${v} ô`,
+      note:ok.length>1?`Có ${ok.length} cột bằng nhau: ${nm(ok).toLowerCase()} — cùng ${v}.`:``};
+  }
+  if(q.op==="-"){const hi=Math.max(cnt[q.a],cnt[q.b]), l=Math.min(cnt[q.a],cnt[q.b]);
+    return {ok:[hi-l], ans:`${hi-l} ô (${hi} − ${l})`, note:`${hi} − ${l}`};}
+  if(q.op==="+")return {ok:[cnt[q.a]+cnt[q.b]], ans:`${cnt[q.a]+cnt[q.b]} ô (${cnt[q.a]} + ${cnt[q.b]})`, note:`${cnt[q.a]} + ${cnt[q.b]}`};
+  const t=cnt.reduce((x,y)=>x+y,0);
+  return {ok:[t], ans:`${t} ô (${cnt.join(" + ")})`, note:cnt.join(" + ")};
+}
+/* Trang in 3 + 4. cnt=null ⇒ in trước khi chơi: đáp án để trống, bố mẹ tính theo biểu đồ của con.
+   cnt có số ⇒ in sau khi chơi xong trên màn hình: đáp án điền sẵn, khớp đúng bộ câu trên màn hình. */
+function drawPrint(Q,cnt){
+  $("pq").innerHTML=Q.map(q=>`<li><b>${q.t}</b>${icn(q.ic||[])}<em>${q.en}</em><u></u></li>`).join("");
+  $("kintro").innerHTML=cnt
+    ? `<b>Số liệu ván vừa chơi trên màn hình</b> — đáp án dưới đây đã tính sẵn.`
+    : `<b>Ván chơi trên giấy:</b> đáp án tuỳ xúc xắc, nên bố mẹ chép số ô của từng cột trên biểu đồ của con vào hàng dưới rồi tính theo cột “Cách tìm”.`;
+  $("kcount").innerHTML=S.map((a,i)=>`<span><span class="ic">${ICON(a)}</span><b>${cnt?cnt[i]:""}</b>${a.vi}</span>`).join("");
+  $("ktab").innerHTML=`<thead><tr><th>Câu</th><th>Cách tìm</th><th>Đáp án</th></tr></thead><tbody>`+
+    Q.map((q,i)=>`<tr><td class="c">${i+1}</td><td>${q.how}</td>`+
+      `<td class="${cnt?"c":"blank"}">${cnt?solve(q,cnt).ans:""}</td></tr>`).join("")+`</tbody>`;
+}
+function printQs(){
+  const all=shuffle(allPairs());
+  drawPrint(qSpec(all.slice(0,3),all[3]),null);
 }
 function drawChart(){
   $("yax").innerHTML=Array.from({length:ROWS+1},(_,i)=>`<span>${i}</span>`).join("");
@@ -394,39 +465,24 @@ $("plot").addEventListener("click",e=>{
   say(`Đó là cột <b>${S[i].vi.toLowerCase()}</b>. Con vừa đến <b>${S[waiting].vi.toLowerCase()}</b> — thử lại.`,"no");
 });
 
-/* ===== 5 câu hỏi ===== */
+/* ===== câu hỏi cuối ván ===== */
 function finish(){
   over=true; waiting=-1; paint();
   $("roll").disabled=true;
-  say(`🏁 Đến <b>FINISH</b> rồi! Giờ nhìn biểu đồ trả lời 5 câu.`,"ok");
-  const mx=Math.max(...count), mn=Math.min(...count);
-  const bigs=count.map((v,i)=>v===mx?i:-1).filter(i=>i>=0);
-  const smalls=count.map((v,i)=>v===mn?i:-1).filter(i=>i>=0);
-  const nm=l=>l.map(i=>S[i].vi.toLowerCase()).join(", ").replace(/, ([^,]*)$/," và $1");
-
-  const pairs=[],seen=new Set();
-  const all=[]; for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++)all.push([a,b]);
-  shuffle(all);
+  const all=shuffle(allPairs());
   // ưu tiên cặp lệch nhau: hỏi hiệu của hai cột bằng nhau thì câu hỏi nhạt
   all.sort((p,q)=>(count[p[0]]===count[p[1]])-(count[q[0]]===count[q[1]]));
-  for(const p of all){const k=p.join("-"); if(!seen.has(k)){seen.add(k);pairs.push(p);} if(pairs.length===3)break;}
+  const Q=qSpec(all.slice(0,3),all[3+ri(0,all.length-4)]).map(q=>({...q,...solve(q,count)}));
+  drawPrint(Q,count);              // in sau ván này thì trang câu hỏi + đáp án khớp màn hình
+  say(`🏁 Đến <b>FINISH</b> rồi! Giờ nhìn biểu đồ trả lời ${Q.length} câu.`,"ok");
 
-  const Q=[
-   {t:`Hình nào <b>nhiều nhất</b>?`, en:`Which shape has the most?`, kind:"shape",
-    ok:bigs, note:bigs.length>1?`Có ${bigs.length} cột cao bằng nhau: ${nm(bigs)} — cùng ${mx}.`:``},
-   {t:`Hình nào <b>ít nhất</b>?`, en:`Which shape has the fewest?`, kind:"shape",
-    ok:smalls, note:smalls.length>1?`Có ${smalls.length} cột thấp bằng nhau: ${nm(smalls)} — cùng ${mn}.`:``},
-   ...pairs.map(([a,b])=>({
-    t:`<b>${S[a].vi}</b> và <b>${S[b].vi.toLowerCase()}</b> chênh nhau mấy ô?`,
-    en:`What is the difference between ${S[a].en.toLowerCase()} and ${S[b].en.toLowerCase()}?`,
-    kind:"num", ok:[Math.abs(count[a]-count[b])],
-    note:`${Math.max(count[a],count[b])} − ${Math.min(count[a],count[b])}`}))
-  ];
-
+  // số lựa chọn: đáp án ≤ 9 thì 0–9; lớn hơn thì 10 số liền nhau có chứa đáp án
+  const nums=q=>{const v=q.ok[0], st=v<=9?0:v-ri(1,8);
+    return Array.from({length:10},(_,j)=>st+j);};
   $("qlist").innerHTML=Q.map((q,i)=>{
     const opts=q.kind==="shape"
       ? S.map((a,j)=>`<button type="button" data-q="${i}" data-v="${j}"><span class="ic">${ICON(a)}</span>${a.vi}</button>`).join("")
-      : Array.from({length:10},(_,j)=>`<button type="button" data-q="${i}" data-v="${j}">${j}</button>`).join("");
+      : nums(q).map(j=>`<button type="button" data-q="${i}" data-v="${j}">${j}</button>`).join("");
     return `<div class="qrow"><p class="qt">${i+1}. ${q.t}<span class="en">${q.en}</span></p>`+
       `<div class="opts${q.kind==="num"?" num":""}">${opts}</div><p class="fb" id="fb${i}"></p></div>`;
   }).join("");
@@ -443,7 +499,7 @@ function finish(){
     hit[qi]=true;
     if(hit.every(Boolean)){
       $("done").hidden=false;
-      $("done").innerHTML=`🎉 <b>Xong cả 5 câu.</b> Con vừa đọc biểu đồ do chính con dựng lên — `+
+      $("done").innerHTML=`🎉 <b>Xong cả ${Q.length} câu.</b> Con vừa đọc biểu đồ do chính con dựng lên — `+
         `không phải đếm lại bàn cờ một lần nào. Bấm <b>↻ Ván mới</b> để chơi ván khác.`;
     }
   };
@@ -455,7 +511,7 @@ function finish(){
 function reset(){
   pos=0; count=[0,0,0,0,0]; waiting=-1; over=false;
   $("quiz").hidden=true; $("done").hidden=true; $("qlist").innerHTML="";
-  newBoard(); drawChart(); drawPrintQs(); paint();
+  newBoard(); drawChart(); printQs(); paint();
   at(0).classList.add("here");
   at(0).insertAdjacentHTML("beforeend",`<div class="pawn">${PAWN}</div>`);
   $("bwrap").scrollLeft=0;
