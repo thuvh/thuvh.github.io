@@ -91,7 +91,7 @@ ol.q .ic{display:inline-block;width:9mm;height:9mm;vertical-align:-2.5mm}
 <div class="note">
 <h1>Đếm và tô biểu đồ — hình khối</h1>
 <p><b>In:</b> Ctrl/Cmd+P → A4, một mặt, tỉ lệ 100%, bỏ tick “headers and footers”. Khung nét đứt chỉ hiện trên màn hình.</p>
-<p><b>4 trang:</b> ① đếm · ② tô biểu đồ cột · ③ năm câu hỏi · ④ <b>đáp án — in rời, giữ riêng</b>. Cần bút màu <b>xanh lá, đỏ, vàng, tím</b>.</p>
+<p><b>4 trang:</b> ① đếm · ② tô biểu đồ cột · ③ bảy câu hỏi · ④ <b>đáp án — in rời, giữ riêng</b>. Cần bút màu <b>xanh lá, đỏ, vàng, tím</b>.</p>
 <p style="margin:14px 0">
   <button id="roll" type="button">🎲 Đổi số rồi in lại</button>
   <button id="mode" type="button" style="margin-left:8px"></button>
@@ -144,11 +144,11 @@ ol.q .ic{display:inline-block;width:9mm;height:9mm;vertical-align:-2.5mm}
   <div class="hd"><span class="ttl">ĐÁP ÁN — CỦA BỐ</span><span class="wk">🔴 in rời · giữ riêng · không đưa con xem</span></div>
   <div class="box"><h3>SỐ HÌNH TRONG KHUNG TRANG 1</h3><div id="key"></div></div>
   <table id="ansq"></table>
-  <p class="warn">📌 <b>Đọc theo dạng, không đọc theo số câu đúng.</b> Sai câu 1–2 ⇒ chưa so được cột cao thấp, quay lại tô. Sai câu 3 ⇒ nghe chưa ra <b>từ lệnh</b> <i>“nhiều hơn mấy”</i> — chỗ mất điểm lớn nhất trong đề thi thật, không phải chỗ thiếu kiến thức. Sai câu 4 ⇒ cộng bốn số là việc khó, bình thường. Sai câu 5 ⇒ chưa tách được biểu đồ khỏi đống hình.</p>
+  <p class="warn">📌 <b>Đọc theo dạng, không đọc theo số câu đúng.</b> Sai câu 1–2 ⇒ chưa so được cột cao thấp, quay lại tô. Sai câu 3–5 ⇒ nghe chưa ra <b>từ lệnh</b> <i>“nhiều hơn / ít hơn mấy”</i> — chỗ mất điểm lớn nhất trong đề thi thật, không phải chỗ thiếu kiến thức. Sai câu 6 ⇒ cộng bốn số là việc khó, bình thường. Sai câu 7 ⇒ chưa tách được biểu đồ khỏi đống hình.</p>
   <p class="warn">🎨 <b>Nếu in bản để trắng, chấm tách làm hai chuyện.</b> Hình tô <b>sai màu</b> là lỗi <b>phân loại</b> — con chưa nhìn ra đó là hình gì, và nó sẽ kéo sai luôn cả cột ở trang 2. Tô đúng màu nhưng <b>đếm lệch</b> thì chỉ là lỗi đếm, nhẹ hơn nhiều. Hai thứ này chữa khác nhau, đừng gộp thành “làm sai”.</p>
   <p class="warn">🔷 <b>Một câu hỏi thêm, chỉ hỏi miệng, không ghi điểm:</b> <i>“Hình nào có 3 cạnh? Hình nào không có cạnh nào?”</i> Con chỉ đúng tam giác và hình tròn ⇒ con đang nhìn <b>hình</b>. Con im hoặc chỉ theo màu ⇒ con đếm cả tờ này bằng màu, và lần sau nên in bản để trắng.</p>
   <p class="warn">🔴 <b>Không đọc số câu đúng cho con nghe.</b> Thứ đáng ghi lại kèm ngày là <b>câu con nói khi làm xong</b>, không phải con số — cùng quy tắc với mọi phép thử khác.</p>
-  <p class="warn">🎲 <b>Dùng lại tờ này:</b> mở tệp trên trình duyệt, bấm <b>“Đổi số rồi in lại”</b> — số hình sinh mới, năm câu hỏi và cả trang đáp án này tự tính lại theo. In được bao nhiêu lần tuỳ ý, không lần nào trùng lần nào.</p>
+  <p class="warn">🎲 <b>Dùng lại tờ này:</b> mở tệp trên trình duyệt, bấm <b>“Đổi số rồi in lại”</b> — số hình sinh mới, bảy câu hỏi và cả trang đáp án này tự tính lại theo. In được bao nhiêu lần tuỳ ý, không lần nào trùng lần nào.</p>
 </div>
 
 <script>
@@ -180,12 +180,17 @@ const ROWS=10;
 const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 let BLANK=false;                       // false = tô sẵn · true = để trắng cho con tô
 
+const pairs=()=>A.flatMap((_,x)=>A.map((_,y)=>[x,y]).filter(([,y])=>y>x));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
 function counts(){
   for(;;){
     const c=A.map(()=>ri(2,8));
     const mx=Math.max(...c), mn=Math.min(...c);
-    // cần đúng một loại nhiều nhất, và khoảng cách đủ để câu "nhiều hơn mấy" có nghĩa
-    if(c.filter(v=>v===mx).length===1 && mx-mn>=2) return c;
+    // cần đúng một loại nhiều nhất, khoảng cách đủ để câu "nhiều hơn mấy" có nghĩa,
+    // và ít nhất 3 cặp hình khác số lượng để ra 3 câu so sánh
+    const diff=pairs().filter(([x,y])=>c[x]!==c[y]).length;
+    if(c.filter(v=>v===mx).length===1 && mx-mn>=2 && diff>=3) return c;
   }
 }
 
@@ -195,6 +200,11 @@ function build(){
   const iMax=c.indexOf(Math.max(...c));
   const mn=Math.min(...c), iMins=c.map((v,i)=>v===mn?i:-1).filter(i=>i>=0);
   const iMin=iMins[0];
+  // 3 cặp (x, y) ngẫu nhiên, khác số lượng; mỗi câu hỏi ngẫu nhiên "nhiều hơn" hoặc "ít hơn"
+  const cmp=shuffle(pairs().filter(([x,y])=>c[x]!==c[y])).slice(0,3).map(([x,y])=>{
+    const [b,s]=c[x]>c[y]?[x,y]:[y,x];
+    return Math.random()<.5?{x:b,y:s,more:true}:{x:s,y:b,more:false};
+  });
   const iAdd=ri(0,A.length-1);
 
   /* ---- chế độ: dòng mẫu ăn mất chiều cao, khung co lại đúng bấy nhiêu ---- */
@@ -253,7 +263,7 @@ function build(){
   document.getElementById("xlabs").innerHTML=A.map(a=>
     `<u><span class="ic">${ICON(a,false)}</span><b class="vn">${a.vi}</b><em>${a.en}</em></u>`).join("");
 
-  /* ---- ③ năm câu hỏi ---- */
+  /* ---- ③ bảy câu hỏi ---- */
   const lo=i=>A[i].vi.toLowerCase();
   const Q=[
    {en:`Which shape has the <b>most</b>?`, vi:`Hình nào <b>nhiều nhất</b>?`,
@@ -266,20 +276,26 @@ function build(){
     why: iMins.length>1
        ? `🔴 Có HAI cột thấp bằng nhau. Con chỉ nói một hình là dừng ở cái nhìn thấy trước`
        : `fewest — cột thấp nhất`},
-   {en:`How many <b>more</b> ${A[iMax].en.toLowerCase()}s than ${A[iMin].en.toLowerCase()}s?`,
-    vi:`${A[iMax].vi} nhiều hơn ${lo(iMin)} <b>mấy hình</b>?`,
-    a:`${c[iMax]-c[iMin]} hình &nbsp;<span style="font-weight:400">(${c[iMax]} − ${c[iMin]})</span>`,
-    why:`🔴 how many more — phải TRỪ. Con đọc "${c[iMax]}" ⇒ đếm đúng, nghe sai câu hỏi`},
+   ...cmp.map(({x,y,more})=>{
+     const hi=Math.max(c[x],c[y]), lo2=Math.min(c[x],c[y]);
+     return {ic:[x,y],
+      en:`How many <b>${more?"more":"fewer"}</b> ${A[x].en.toLowerCase()}s than ${A[y].en.toLowerCase()}s?`,
+      vi:`${A[x].vi} ${more?"nhiều":"ít"} hơn ${lo(y)} <b>mấy hình</b>?`,
+      a:`${hi-lo2} hình &nbsp;<span style="font-weight:400">(${hi} − ${lo2})</span>`,
+      why: more
+        ? `🔴 how many more — phải TRỪ. Con đọc "${c[x]}" ⇒ đếm đúng, nghe sai câu hỏi`
+        : `🔴 how many fewer — vẫn lấy số LỚN trừ số BÉ. Con viết "${c[x]}" ⇒ đọc cột, chưa so`};
+   }),
    {en:`How many shapes <b>in all</b>?`, vi:`Tất cả bao nhiêu hình?`,
     a:`${total} hình &nbsp;<span style="font-weight:400">(${c.join(" + ")})</span>`,
     why:`in all — cộng cả bốn cột. Cộng bốn số là việc khó với lớp 1`},
-   {en:`<b>2 more</b> ${A[iAdd].en.toLowerCase()}s are added. How many cells will you colour then?`,
+   {ic:[iAdd], en:`<b>2 more</b> ${A[iAdd].en.toLowerCase()}s are added. How many cells will you colour then?`,
     vi:`Có thêm <b>2 ${lo(iAdd)}</b> nữa. Lúc đó cột ${lo(iAdd)} cao mấy ô?`,
     a:`${c[iAdd]+2} ô &nbsp;<span style="font-weight:400">(${c[iAdd]} + 2)</span>`,
     why:`🔴 Con tô thêm vào biểu đồ thay vì trả lời bằng số ⇒ chưa tách được BIỂU ĐỒ khỏi ĐỐNG HÌNH`}
   ];
-  document.getElementById("qs").innerHTML=Q.map((q,i)=>
-    `<li><b>${q.en.replace(/^./,m=>m.toUpperCase())}</b> ${i===2?`<span class="ic">${ICON(A[iMax],false)}</span>`:i===4?`<span class="ic">${ICON(A[iAdd],false)}</span>`:""}`+
+  document.getElementById("qs").innerHTML=Q.map(q=>
+    `<li><b>${q.en.replace(/^./,m=>m.toUpperCase())}</b> ${(q.ic||[]).map(k=>`<span class="ic">${ICON(A[k],false)}</span>`).join("")}`+
     `<span class="vi">${q.vi}</span><span class="ans"></span></li>`).join("");
 
   /* ---- ④ đáp án ---- */
