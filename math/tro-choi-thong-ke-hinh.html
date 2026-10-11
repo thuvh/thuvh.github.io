@@ -1,0 +1,471 @@
+<title>Trò chơi thống kê hình phẳng</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Be+Vietnam+Pro:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#23201c; --soft:#6d6760; --line:#ded8cf; --guide:#cfc8bd;
+  --accent:#2a6ad6; --ok:#2f7d3a; --no:#c0392b; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17161a; --card:#211f25; --ink:#eceaf2; --soft:#a39eaa; --line:#36333c; --guide:#413d49;
+  --accent:#6ea2ff; --ok:#6cc47a; --no:#ff8a7a; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 "Be Vietnam Pro","Lexend",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+h1{font:700 23px/1.25 "Lexend",system-ui,sans-serif;margin:0 0 4px;letter-spacing:-.01em}
+h2{font:700 13px/1.3 "Lexend",system-ui,sans-serif;margin:0 0 10px;color:var(--soft);
+  letter-spacing:.09em;text-transform:uppercase}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.lede{color:var(--soft);font-size:14px;margin:0 0 18px;max-width:62ch}
+.lede b{color:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.game{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:16px;align-items:start}
+@media (max-width:860px){.game{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- thanh xúc xắc ---------- */
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+button{font:600 15px/1 inherit;padding:12px 18px;border:1px solid var(--line);border-radius:10px;
+  background:var(--card);color:var(--ink);cursor:pointer;transition:transform .08s,background .15s}
+button:hover:not(:disabled){background:var(--bg)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.42;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.go{background:var(--accent);border-color:transparent;color:#fff;font-size:17px;padding:13px 26px}
+button.go:hover:not(:disabled){background:var(--accent);filter:brightness(1.08)}
+button.sm{font-size:13px;padding:8px 13px}
+.die{width:58px;height:58px;flex:none}
+.die svg{width:100%;height:100%;display:block}
+.die.roll{animation:shake .42s ease}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-17deg) scale(1.08)}
+  60%{transform:rotate(14deg) scale(1.08)}}
+.say{flex:1;min-width:220px;font-size:14.5px;line-height:1.35}
+.say b{font-weight:600}
+.say .q{color:var(--soft);display:block;font-size:12.5px;font-style:italic}
+.say.ok b{color:var(--ok)} .say.no b{color:var(--no)}
+
+/* ---------- bàn cờ ---------- */
+.bwrap{position:relative;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+.board{display:grid;grid-template-columns:repeat(var(--n,13),minmax(0,1fr));gap:4px}
+/* màn hẹp: thà cuộn ngang còn hơn ép 13 cột xuống 20px — nhìn không ra hình thì
+   mất đúng cái việc con phải làm. Quân đi tới đâu, bwrap tự kéo theo tới đó. */
+@media (max-width:620px){.board{gap:3px;min-width:460px}.sq{border-radius:6px;padding:7%}}
+.sq{position:relative;aspect-ratio:1;min-width:0;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg);display:flex;align-items:center;justify-content:center;padding:9%}
+.sq svg{width:100%;height:100%;display:block}
+.sq.end{background:var(--card);border-width:2px;border-color:var(--ink);padding:6%}
+.sq.end:last-child{box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 12%,transparent)}
+.sq.end text{font:700 20px/1 "Lexend",system-ui,sans-serif;fill:var(--ink);letter-spacing:.5}
+.sq.here{border-color:var(--accent);border-width:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.pawn{position:absolute;inset:auto 2px 2px auto;width:38%;height:38%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.pawn.hop{animation:hop .17s ease}
+@keyframes hop{50%{transform:translateY(-34%) scale(1.14)}}
+
+/* ---------- biểu đồ (khuôn trang 2 của tờ in) ---------- */
+.gridwrap{display:flex;gap:7px}
+.yax{display:flex;flex-direction:column-reverse;justify-content:space-between;width:18px;flex:none;
+  height:528px;font-size:11px;color:var(--soft);text-align:right}
+.yax span{line-height:0;display:block}
+.plot{height:528px;display:flex;gap:6px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);
+  padding:0 6px;align-items:stretch;flex:1;justify-content:center}
+.colm{flex:1;min-width:0;max-width:48px;display:flex;flex-direction:column-reverse}
+.colm i{display:block;flex:1;border:1px solid var(--guide);background:transparent;transition:background .18s}
+.colm i.on{border-color:color-mix(in srgb,var(--ink) 30%,transparent)}
+.colm.pick{cursor:pointer}
+.colm.pick:hover i:not(.on){background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.colm.shake{animation:nope .3s}
+@keyframes nope{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.xlabs{display:flex;gap:6px;margin-left:25px;padding:7px 6px 0;justify-content:center}
+.xlabs u{flex:1;min-width:0;max-width:48px;text-decoration:none;text-align:center;font-size:11.5px;line-height:1.2}
+.xlabs u .ic{width:30px;height:30px;margin:0 auto 3px;display:block}
+.xlabs u .ic svg{width:100%;height:100%;display:block}
+.xlabs u b{display:block;font-weight:600;font-size:11px;min-height:3.6em}
+.xlabs u em{font-style:normal;color:var(--soft);display:block;font-size:10px}
+.xlabs u .n{display:block;font:700 15px/1.1 "Lexend",system-ui,sans-serif;margin-top:3px}
+
+/* ---------- câu hỏi ---------- */
+#quiz{margin-top:16px}
+#quiz[hidden]{display:none}
+.qrow{border-top:1px solid var(--line);padding:14px 0}
+.qrow:first-of-type{border-top:0;padding-top:4px}
+.qt{font-size:15.5px;font-weight:600;margin:0 0 2px}
+.qt .en{display:block;font-weight:400;font-size:12.5px;color:var(--soft);font-style:italic}
+.opts{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.opts button{padding:8px 11px;font-size:13.5px;display:flex;align-items:center;gap:6px}
+.opts button .ic{width:24px;height:24px;flex:none}
+.opts button .ic svg{width:100%;height:100%;display:block}
+.opts.num button{min-width:46px;justify-content:center;font:700 16px/1 "Lexend",system-ui,sans-serif;padding:10px}
+.opts button.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.opts button.bad{border-color:var(--no);background:color-mix(in srgb,var(--no) 13%,transparent);color:var(--no)}
+.fb{font-size:13px;margin-top:8px;min-height:1.2em;color:var(--soft)}
+.fb.ok{color:var(--ok);font-weight:600} .fb.no{color:var(--no)}
+.done{margin-top:16px;padding:14px;border-radius:11px;background:color-mix(in srgb,var(--ok) 13%,transparent);
+  border:1px solid color-mix(in srgb,var(--ok) 40%,transparent);font-size:14.5px}
+.done[hidden]{display:none}
+
+/* ---------- chỉ hiện khi in ---------- */
+.pOnly{display:none}
+@media print{
+  @page{size:A4;margin:10mm}
+  :root{--ink:#1a1a1a;--soft:#555;--line:#999;--guide:#aaa;--card:#fff;--bg:#fff}
+  body{background:#fff;color:#000;font-size:11pt;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h1,.lede,.bar,#quiz,.pawn{display:none!important}
+  .sq.here{border-color:var(--line);border-width:1px;box-shadow:none}
+  .wrap{max-width:none;padding:0}
+  .game{display:block}
+  .card{border:0;border-radius:0;box-shadow:none;padding:0;background:#fff}
+  .pOnly{display:block}
+  .phead{border-bottom:.6mm solid #000;padding-bottom:2mm;margin-bottom:3mm;
+    display:flex;justify-content:space-between;align-items:baseline}
+  .phead b{font:700 13pt/1.2 "Lexend",system-ui,sans-serif;letter-spacing:.06em}
+  .phead i{font-style:normal;font-size:8.5pt;color:#555}
+  .pname{display:flex;gap:8mm;font-size:10pt;margin-bottom:3mm}
+  .pname u{display:inline-block;width:52mm;border-bottom:.4mm solid #000;text-decoration:none}
+  .ptip{font-size:9.5pt;margin:0 0 3mm}
+  .ptip em{font-style:italic;color:#555}
+
+  /* trang 1 — bàn cờ. overflow:auto khi in sẽ CẮT MẤT phần bàn tràn ra, phải mở lại */
+  .bwrap{overflow:visible!important}
+  .board{gap:1.2mm;min-width:0!important}
+  .sq{border:.35mm solid #777;border-radius:1.6mm;background:#fff;padding:7%}
+  .sq.end{border-width:.7mm;border-color:#000}
+  .sq.end:last-child{box-shadow:none}
+
+  /* trang 2 — bảng thống kê, ép sang MẶT KHÁC */
+  #pane-chart{break-before:page;page-break-before:always}
+  h2{display:none}
+  /* khổ in rộng 190mm: để .plot giãn hết chiều ngang thì các cột trôi vào giữa còn
+     trục tung dính mép trái. Cho cả cụm co theo nội dung rồi căn giữa — cột đứng trên trục. */
+  .gridwrap{gap:2mm;width:max-content;margin:0 auto}
+  .yax,.plot{height:158mm}
+  .yax{width:7mm;font-size:9pt}
+  .plot{flex:none;gap:2mm;padding:0 2mm;border-left:.5mm solid #000;border-bottom:.5mm solid #000}
+  .colm{width:15mm;max-width:none;flex:none}
+  .colm i{border:.3mm solid #aaa}
+  .xlabs{gap:2mm;width:max-content;margin:0 auto;padding:1.5mm 2mm 0 11mm}
+  .xlabs u{width:15mm;max-width:none;flex:none;font-size:8pt}
+  .xlabs u .ic{width:9mm;height:9mm}
+  .xlabs u b{min-height:3.4em;font-size:8pt}
+  .xlabs u em{font-size:7pt}
+  .xlabs u .n{display:none}          /* in ra thì ô ĐẾM phải trống cho con tự viết */
+  ol.pq{margin:3mm 0 0;padding-left:6mm;font-size:10pt}
+  ol.pq li{margin-bottom:2.2mm}
+  ol.pq u{display:inline-block;width:42mm;border-bottom:.4mm solid #000;text-decoration:none}
+  ol.pq em{font-style:italic;color:#555;font-size:8.5pt;display:block}
+}
+</style>
+
+<div class="wrap">
+<h1>Trò chơi thống kê hình phẳng</h1>
+<p class="lede">Tung xúc xắc, đi từ <b>START</b> đến <b>FINISH</b>. Đến ô hình nào thì <b>tô một ô ở cột hình đó</b> trên biểu đồ. Hết ván, nhìn biểu đồ trả lời 5 câu — <b>không đếm lại bàn cờ</b>.</p>
+
+<div class="game">
+  <section class="card" id="pane-board">
+    <div class="pOnly">
+      <div class="phead"><b>① BÀN CỜ · GAME BOARD</b><i>tung xúc xắc từ START vào FINISH ở giữa</i></div>
+      <div class="pname"><span>Tên: <u></u></span><span>Ngày: <u></u></span></div>
+      <p class="ptip"><b>Đến ô hình nào thì tô một ô ở cột hình đó trên bảng ở mặt sau.</b>
+        <em>Land on a shape → colour one cell in its column on the back.</em></p>
+    </div>
+    <div class="bar">
+      <button class="go" id="roll" type="button">🎲 Tung xúc xắc</button>
+      <div class="die" id="die"></div>
+      <p class="say" id="say"></p>
+    </div>
+    <div class="bwrap" id="bwrap"><div class="board" id="board"></div></div>
+    <div class="bar" style="margin:14px 0 0">
+      <button class="sm" id="again" type="button">↻ Làm mới — sinh lại hình</button>
+      <button class="sm" id="print" type="button">🖨️ In 2 mặt</button>
+      <button class="sm" id="auto" type="button"></button>
+    </div>
+  </section>
+
+  <section class="card" id="pane-chart">
+    <div class="pOnly">
+      <div class="phead"><b>② BẢNG THỐNG KÊ · TALLY</b><i>1 ô tô = 1 lần dừng</i></div>
+      <p class="ptip"><b>Tô từ DƯỚI lên, tô đúng màu của hình.</b>
+        <em>Colour from the bottom up, in the shape's colour.</em></p>
+    </div>
+    <h2>Bảng thống kê</h2>
+    <div class="gridwrap">
+      <div class="yax" id="yax"></div>
+      <div class="plot" id="plot"></div>
+    </div>
+    <div class="xlabs" id="xlabs"></div>
+    <ol class="pq pOnly" id="pq"></ol>
+  </section>
+</div>
+
+<section class="card" id="quiz" hidden>
+  <h2>Nhìn biểu đồ · Look at the graph</h2>
+  <div id="qlist"></div>
+  <div class="done" id="done" hidden></div>
+</section>
+</div>
+
+<script>
+/* ===== hình nhân cách hoá: thân + mặt + hai tay ===== */
+const face=(cx,cy,s)=>{
+  const ex=7.4*s, ey=cy-6*s, r=5.2*s, ink="#2b2722";
+  return `<circle cx="${cx-ex}" cy="${ey}" r="${r}" fill="${ink}"/><circle cx="${cx+ex}" cy="${ey}" r="${r}" fill="${ink}"/>`+
+   `<circle cx="${cx-ex+r*.33}" cy="${ey-r*.38}" r="${r*.34}" fill="#fff"/>`+
+   `<circle cx="${cx+ex+r*.33}" cy="${ey-r*.38}" r="${r*.34}" fill="#fff"/>`+
+   `<ellipse cx="${cx}" cy="${cy+3.2*s}" rx="${3.1*s}" ry="${2.3*s}" fill="${ink}" opacity=".72"/>`+
+   `<path d="M${cx-8*s},${cy+8.4*s} q${8*s},${7.4*s} ${16*s},0" fill="none" stroke="${ink}"
+     stroke-width="${2.7*s}" stroke-linecap="round"/>`;
+};
+const arm=(x1,y1,x2,y2,c)=>
+ `<path d="M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-8} ${x2},${y2}" fill="none" stroke="${c}"
+   stroke-width="5" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="4.6" fill="${c}"/>`;
+
+const BODY={
+ square:  (f,s)=>`<rect x="18" y="20" width="64" height="64" rx="7" fill="${f}" stroke="${s}" stroke-width="4.5"/>`,
+ rect:    (f,s)=>`<rect x="9" y="30" width="82" height="44" rx="7" fill="${f}" stroke="${s}" stroke-width="4.5"/>`,
+ triangle:(f,s)=>`<path d="M50,11 L90,86 L10,86 Z" fill="${f}" stroke="${s}" stroke-width="4.5" stroke-linejoin="round"/>`,
+ circle:  (f,s)=>`<circle cx="50" cy="52" r="34" fill="${f}" stroke="${s}" stroke-width="4.5"/>`,
+ oval:    (f,s)=>`<ellipse cx="50" cy="52" rx="40" ry="27" fill="${f}" stroke="${s}" stroke-width="4.5"/>`
+};
+const ARMS={
+ square:  s=>arm(18,60,5,72,s)+arm(82,60,95,72,s),
+ rect:    s=>arm(9,58,2,71,s)+arm(91,58,98,71,s),
+ triangle:s=>arm(21,74,6,84,s)+arm(79,74,94,84,s),
+ circle:  s=>arm(19,68,6,79,s)+arm(81,68,94,79,s),
+ oval:    s=>arm(13,64,3,76,s)+arm(87,64,97,76,s)
+};
+const FACE={square:[50,48,1], rect:[50,52,.9], triangle:[50,59,.82], circle:[50,50,1], oval:[50,52,.95]};
+
+const S=[
+ {k:"square",  vi:"Hình vuông",    en:"Square",    hex:"#3f9142", line:"#27602a"},
+ {k:"rect",    vi:"Hình chữ nhật", en:"Rectangle", hex:"#3b78c3", line:"#245084"},
+ {k:"triangle",vi:"Hình tam giác", en:"Triangle",  hex:"#c62f24", line:"#8a201a"},
+ {k:"circle",  vi:"Hình tròn",     en:"Circle",    hex:"#f0ad1d", line:"#8f6a09"},
+ {k:"oval",    vi:"Hình bầu dục",  en:"Oval",      hex:"#7a4fbf", line:"#4e2b87"}
+];
+const ICON=a=>{const [fx,fy,fs]=FACE[a.k];
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="${a.en}">`+
+    ARMS[a.k](a.line)+BODY[a.k](a.hex,a.line)+face(fx,fy,fs)+`</svg>`;};
+
+const PAWN=`<svg viewBox="0 0 100 100" aria-label="quân cờ"><circle cx="50" cy="32" r="21" fill="#23201c"/>`+
+ `<path d="M24,86 C24,62 38,56 50,56 C62,56 76,62 76,86 Z" fill="#23201c"/>`+
+ `<circle cx="43" cy="27" r="5.4" fill="#fff"/></svg>`;
+
+const DIE=n=>{const P={1:[[50,50]],2:[[30,30],[70,70]],3:[[28,28],[50,50],[72,72]],
+ 4:[[30,30],[70,30],[30,70],[70,70]],5:[[30,30],[70,30],[50,50],[30,70],[70,70]],
+ 6:[[30,26],[70,26],[30,50],[70,50],[30,74],[70,74]]};
+ return `<svg viewBox="0 0 100 100" role="img" aria-label="xúc xắc ${n}">`+
+  `<rect x="5" y="5" width="90" height="90" rx="19" fill="#fff" stroke="#23201c" stroke-width="5"/>`+
+  P[n].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="8.5" fill="#23201c"/>`).join("")+`</svg>`;};
+
+/* ===== trạng thái ===== */
+/* Đường đi là một xoắn ốc vuông tự tránh trên lưới N×N: đi vòng ngoài rồi cuộn dần vào,
+   LUÔN chừa một ô trống giữa hai vòng kề nhau — không có khoảng trống đó thì bàn cờ
+   thành một khối đặc, nhìn không ra đường. N=13 là số cho đường kết thúc ĐÚNG Ô TÂM. */
+const N=13;
+function spiralPath(n){
+  const D=[[0,1],[1,0],[0,-1],[-1,0]], key=(r,c)=>r+","+c, seen=new Set([key(0,0)]);
+  let r=0,c=0,d=0; const p=[[0,0]];
+  for(let guard=0;guard<n*n*4;guard++){
+    let moved=false;
+    for(let t=0;t<2;t++){                        // đi thẳng; không được thì rẽ một lần
+      const [dr,dc]=D[d], nr=r+dr, nc=c+dc;
+      const free = nr>=0&&nc>=0&&nr<n&&nc<n && !seen.has(key(nr,nc)) &&
+        // ô mới không được kề ô đã đi nào khác ô đang đứng ⇒ hai vòng luôn cách nhau một ô
+        D.every(([ar,ac])=>(nr+ar===r&&nc+ac===c)||!seen.has(key(nr+ar,nc+ac)));
+      if(free){r=nr;c=nc;seen.add(key(r,c));p.push([r,c]);moved=true;break;}
+      d=(d+1)%4;
+    }
+    if(!moved)break;
+  }
+  return p;
+}
+const GRID=spiralPath(N);
+const CELLS=GRID.length, LAST=CELLS-1, ROWS=12;
+/* 95 ô hình ÷ 3,5 (trung bình xúc xắc) ≈ 27 lượt dừng ≈ 5 ô mỗi hình.
+   Bàn ngắn hơn thì mỗi cột chỉ cao 3, câu "chênh nhau mấy ô" hay ra 0–1 và ba cột hoà nhau.
+   Lưới 12 hàng chứ không 10: với 27 lượt, một cột chạm 10 là chuyện xảy ra thật. */
+let path=[], pos=0, count=[0,0,0,0,0], waiting=-1, over=false, AUTO=false;
+const $=id=>document.getElementById(id);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+function newBoard(){
+  const n=CELLS-2, base=Math.floor(n/S.length), rest=n-base*S.length;   // 95 = 19*5 + 0
+  const bag=[];
+  S.forEach((_,i)=>{for(let k=0;k<base+(i<rest?1:0);k++)bag.push(i);});
+  path=shuffle(bag);
+  $("board").style.setProperty("--n",N);
+  $("board").innerHTML=GRID.map(([r,c],i)=>{
+    const st=`grid-row:${r+1};grid-column:${c+1}`;
+    if(i===0||i===LAST){const w=i?"FINISH":"START";
+      return `<div class="sq end" style="${st}" data-i="${i}">`+
+        `<svg viewBox="0 0 100 100" role="img" aria-label="${w}">`+
+        `<text x="50" y="58" text-anchor="middle" textLength="84" lengthAdjust="spacingAndGlyphs">${w}</text>`+
+        `</svg></div>`;}
+    return `<div class="sq" style="${st}" data-i="${i}">${ICON(S[path[i-1]])}</div>`;
+  }).join("");
+}
+const at=i=>$("board").querySelector(`[data-i="${i}"]`);
+const shapeAt=i=>(i===0||i===LAST)?-1:path[i-1];
+
+// Bản in chưa có số liệu nên không thể ưu tiên cặp lệch nhau như bản chơi trên màn hình;
+// bốc 3 cặp phân biệt ngay lúc sinh bàn để tờ in nào cũng khác tờ in nào.
+function drawPrintQs(){
+  const all=[]; for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++)all.push([a,b]);
+  const pr=shuffle(all).slice(0,3);
+  const line=(vi,en)=>`<li>${vi} <u></u><em>${en}</em></li>`;
+  $("pq").innerHTML=
+    line(`Hình nào <b>nhiều nhất</b>?`,`Which shape has the most?`)+
+    line(`Hình nào <b>ít nhất</b>?`,`Which shape has the fewest?`)+
+    pr.map(([a,b])=>line(
+      `<b>${S[a].vi}</b> và <b>${S[b].vi.toLowerCase()}</b> chênh nhau mấy ô?`,
+      `What is the difference between ${S[a].en.toLowerCase()} and ${S[b].en.toLowerCase()}?`)).join("");
+}
+function drawChart(){
+  $("yax").innerHTML=Array.from({length:ROWS+1},(_,i)=>`<span>${i}</span>`).join("");
+  $("plot").innerHTML=S.map((_,i)=>
+    `<div class="colm" data-s="${i}">`+
+    Array.from({length:ROWS},(_,r)=>`<i data-r="${r}"></i>`).join("")+`</div>`).join("");
+  $("xlabs").innerHTML=S.map((a,i)=>
+    `<u><span class="ic">${ICON(a)}</span><b>${a.vi}</b><em>${a.en}</em><span class="n" id="n${i}">0</span></u>`).join("");
+}
+function paint(){
+  S.forEach((a,i)=>{
+    const col=$("plot").children[i];
+    [...col.children].forEach((cell,r)=>{
+      const on=r<Math.min(count[i],ROWS);
+      cell.classList.toggle("on",on);
+      cell.style.background=on?a.hex:"";
+    });
+    $("n"+i).textContent=count[i];
+    col.classList.toggle("pick",waiting===i);
+  });
+}
+function say(html,cls=""){$("say").className="say "+cls;$("say").innerHTML=html;}
+
+/* ===== lượt chơi ===== */
+function roll(){
+  if(over||waiting>=0)return;
+  $("roll").disabled=true;
+  const n=1+Math.floor(Math.random()*6);
+  $("die").className="die roll"; $("die").innerHTML=DIE(n);
+  setTimeout(()=>{$("die").className="die";step(n);},430);
+}
+function step(left){
+  if(left===0){landed();return;}
+  at(pos).classList.remove("here");
+  const old=at(pos).querySelector(".pawn"); if(old)old.remove();
+  pos=Math.min(pos+1,LAST);                       // quá FINISH thì dừng ở FINISH
+  const sq=at(pos); sq.classList.add("here");
+  sq.insertAdjacentHTML("beforeend",`<div class="pawn hop">${PAWN}</div>`);
+  keepInView(sq);
+  if(pos===LAST){setTimeout(landed,190);return;}
+  setTimeout(()=>step(left-1),175);
+}
+// chỉ kéo thanh cuộn ngang của bwrap, không bao giờ cuộn cả trang
+function keepInView(sq){
+  const w=$("bwrap"); if(w.scrollWidth<=w.clientWidth)return;
+  const l=sq.offsetLeft, r=l+sq.offsetWidth;
+  // cuộn tức thì, KHÔNG smooth: quân nhảy 175ms/ô, hoạt ảnh cuộn bị cắt ngang liên tục
+  // nên chẳng bao giờ tới nơi — quân chạy ra ngoài khung mà thanh cuộn còn ì tại chỗ.
+  if(l<w.scrollLeft)                      w.scrollLeft=Math.max(0,l-24);
+  else if(r>w.scrollLeft+w.clientWidth)   w.scrollLeft=r-w.clientWidth+24;
+}
+function landed(){
+  if(pos===LAST){finish();return;}
+  const s=shapeAt(pos);
+  if(AUTO){bump(s);return;}
+  waiting=s; paint();
+  say(`Con đến ô <b>${S[s].vi.toLowerCase()}</b> — tô một ô ở cột <b>${S[s].vi.toLowerCase()}</b>.`+
+      `<span class="q">You landed on a ${S[s].en.toLowerCase()}. Colour one cell in its column.</span>`);
+}
+function bump(s){
+  count[s]++;                      // luôn tăng. Cột kịch lưới thì chặn CỘT, không chặn SỐ —
+  waiting=-1; paint();             // nuốt một lượt là biểu đồ nói dối về bàn cờ.
+  $("roll").disabled=false;
+  if(count[s]>ROWS){say(`Cột <b>${S[s].vi.toLowerCase()}</b> cao quá lưới — xem con số dưới chân cột.`);return;}
+  if(!AUTO)say(`Tốt. Tung tiếp đi con.<span class="q">Nice. Roll again.</span>`,"ok");
+  else say(`Đến ô <b>${S[s].vi.toLowerCase()}</b>, cột đó cao thêm 1.`);
+}
+$("plot").addEventListener("click",e=>{
+  const col=e.target.closest(".colm"); if(!col||waiting<0)return;
+  const i=+col.dataset.s;
+  if(i===waiting){bump(i);return;}
+  col.classList.add("shake"); setTimeout(()=>col.classList.remove("shake"),300);
+  say(`Đó là cột <b>${S[i].vi.toLowerCase()}</b>. Con vừa đến <b>${S[waiting].vi.toLowerCase()}</b> — thử lại.`,"no");
+});
+
+/* ===== 5 câu hỏi ===== */
+function finish(){
+  over=true; waiting=-1; paint();
+  $("roll").disabled=true;
+  say(`🏁 Đến <b>FINISH</b> rồi! Giờ nhìn biểu đồ trả lời 5 câu.`,"ok");
+  const mx=Math.max(...count), mn=Math.min(...count);
+  const bigs=count.map((v,i)=>v===mx?i:-1).filter(i=>i>=0);
+  const smalls=count.map((v,i)=>v===mn?i:-1).filter(i=>i>=0);
+  const nm=l=>l.map(i=>S[i].vi.toLowerCase()).join(", ").replace(/, ([^,]*)$/," và $1");
+
+  const pairs=[],seen=new Set();
+  const all=[]; for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++)all.push([a,b]);
+  shuffle(all);
+  // ưu tiên cặp lệch nhau: hỏi hiệu của hai cột bằng nhau thì câu hỏi nhạt
+  all.sort((p,q)=>(count[p[0]]===count[p[1]])-(count[q[0]]===count[q[1]]));
+  for(const p of all){const k=p.join("-"); if(!seen.has(k)){seen.add(k);pairs.push(p);} if(pairs.length===3)break;}
+
+  const Q=[
+   {t:`Hình nào <b>nhiều nhất</b>?`, en:`Which shape has the most?`, kind:"shape",
+    ok:bigs, note:bigs.length>1?`Có ${bigs.length} cột cao bằng nhau: ${nm(bigs)} — cùng ${mx}.`:``},
+   {t:`Hình nào <b>ít nhất</b>?`, en:`Which shape has the fewest?`, kind:"shape",
+    ok:smalls, note:smalls.length>1?`Có ${smalls.length} cột thấp bằng nhau: ${nm(smalls)} — cùng ${mn}.`:``},
+   ...pairs.map(([a,b])=>({
+    t:`<b>${S[a].vi}</b> và <b>${S[b].vi.toLowerCase()}</b> chênh nhau mấy ô?`,
+    en:`What is the difference between ${S[a].en.toLowerCase()} and ${S[b].en.toLowerCase()}?`,
+    kind:"num", ok:[Math.abs(count[a]-count[b])],
+    note:`${Math.max(count[a],count[b])} − ${Math.min(count[a],count[b])}`}))
+  ];
+
+  $("qlist").innerHTML=Q.map((q,i)=>{
+    const opts=q.kind==="shape"
+      ? S.map((a,j)=>`<button type="button" data-q="${i}" data-v="${j}"><span class="ic">${ICON(a)}</span>${a.vi}</button>`).join("")
+      : Array.from({length:10},(_,j)=>`<button type="button" data-q="${i}" data-v="${j}">${j}</button>`).join("");
+    return `<div class="qrow"><p class="qt">${i+1}. ${q.t}<span class="en">${q.en}</span></p>`+
+      `<div class="opts${q.kind==="num"?" num":""}">${opts}</div><p class="fb" id="fb${i}"></p></div>`;
+  }).join("");
+
+  const hit=new Array(Q.length).fill(false);
+  $("qlist").onclick=e=>{            // gán đè: ván mới thay listener của ván cũ
+    const b=e.target.closest("button[data-q]"); if(!b)return;
+    const qi=+b.dataset.q, v=+b.dataset.v, q=Q[qi], fb=$("fb"+qi);
+    const good=q.ok.includes(v);
+    b.classList.add(good?"good":"bad");
+    if(!good){fb.className="fb no";fb.textContent="Chưa đúng — nhìn lại biểu đồ rồi thử tiếp.";return;}
+    [...b.parentElement.children].forEach(x=>{if(x!==b)x.disabled=true;});
+    fb.className="fb ok"; fb.textContent="Đúng rồi."+(q.note?" ("+q.note+")":"");
+    hit[qi]=true;
+    if(hit.every(Boolean)){
+      $("done").hidden=false;
+      $("done").innerHTML=`🎉 <b>Xong cả 5 câu.</b> Con vừa đọc biểu đồ do chính con dựng lên — `+
+        `không phải đếm lại bàn cờ một lần nào. Bấm <b>↻ Ván mới</b> để chơi ván khác.`;
+    }
+  };
+  $("quiz").hidden=false;
+  $("quiz").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ===== khởi động ===== */
+function reset(){
+  pos=0; count=[0,0,0,0,0]; waiting=-1; over=false;
+  $("quiz").hidden=true; $("done").hidden=true; $("qlist").innerHTML="";
+  newBoard(); drawChart(); drawPrintQs(); paint();
+  at(0).classList.add("here");
+  at(0).insertAdjacentHTML("beforeend",`<div class="pawn">${PAWN}</div>`);
+  $("bwrap").scrollLeft=0;
+  $("die").innerHTML=DIE(1); $("roll").disabled=false;
+  say(`Bấm <b>Tung xúc xắc</b> để xuất phát.<span class="q">Roll the die to start.</span>`);
+}
+function modeLabel(){$("auto").textContent=AUTO?"⚡ Máy tô giúp — bấm để con tự tô":"✍️ Con tự tô — bấm để máy tô giúp";}
+$("roll").addEventListener("click",roll);
+$("again").addEventListener("click",reset);
+$("print").addEventListener("click",()=>window.print());
+$("auto").addEventListener("click",()=>{AUTO=!AUTO;modeLabel();if(waiting>=0)bump(waiting);});
+modeLabel(); reset();
+</script>
